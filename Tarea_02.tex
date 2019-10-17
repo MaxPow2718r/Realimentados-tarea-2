@@ -1,0 +1,251 @@
+\documentclass[11pt,a4paper]{article}
+
+%declare encodec, also spanish syntax
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+
+%url package
+\usepackage[pdftex,colorlinks=true, urlcolor=blue, linkcolor = black, citecolor=black]{hyperref}
+
+%math fonts
+\usepackage{amsmath, amsfonts, amssymb}
+
+%graphics enviroments
+
+\usepackage{graphicx}
+
+%more packages <|++|>
+
+\usepackage{enumitem}
+
+%tikz for circuits
+\usepackage{circuitikz}
+\usetikzlibrary{shapes, arrows, babel}
+
+%structure of the page
+\usepackage[margin=1in,left=1.5in,includefoot]{geometry}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhead{}
+\fancyfoot{}
+\fancyfoot[R]{\thepage\ }
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{1pt}
+
+\begin{document}
+\begin{titlepage}
+\begin{center}
+\line(1,0){300} \\
+[0.5cm]
+\huge{\bfseries Tarea 02} \\ %Titulo
+[0.5cm]
+\textsc{\LARGE Simulación en xcos} \\ %Subtitulo
+\line(1,0){200} \\
+[12cm]
+\end{center}
+\begin{flushright}
+Sistemas de control realimentados \\%Asignatura
+Autor: Pablo Velásquez \\%Autor
+Profesor: Dr. Carlos Fuhrhop %profesor
+\end{flushright}
+\end{titlepage}
+
+\tableofcontents
+\thispagestyle{empty}
+\cleardoublepage
+
+\setcounter{page}{1}
+\section{Introducción}
+Un sistema de control debe bla bal.
+
+\section{Tarea}
+Asuma el siguiente modelo para una planta:
+
+\begin{equation}\label{eq:planta}
+		\frac{\mathrm{d} y(t)}{\mathrm{d}t} + 2 \sqrt{y(t)} = u(t)
+\end{equation}
+
+Se requiere una ley de control que asegure que la salida de la planta $y(t)$ siga la referencia que varia lentamente.
+
+Una forma de resolver el problema es construir una inversa para el modelo que es valida en la región de baja frecuencia.
+
+Usando la arquitectura de la figura \ref{fig:bloques}, se obtiene una inversa aproximada, proveyendo que $h$ sea una ganancia grande a baja frecuencia.
+
+\begin{figure}[!h]
+\centering
+\begin{circuitikz}
+\draw
+node[mixer] (m) {}
+(m.1) node[inputarrow] {} node[right] {+}
+to[short] ++(-2,0)
+(m.3) to[twoport, text = $h\langle \circ \rangle$] ++(3,0)
+node[circ] (A) {}
+(A) to[short] ++(1,0) node[above left] {$u$}
+to[twoport, text = $f\langle \circ \rangle$] ++(1,0)
+to[short] ++(1,0) node[inputarrow] {} node[above] {$y$}
+(A) to[short] ++(0,-2)
+to[short] ++(-1,0)
+to[twoport, t = $f\langle \circ \rangle$, >] ++(-1,0)
+node[above left] {$z$}
+to[short] ++(-1,0) -| (m.2) node[above] {-} node[inputarrow, rotate = 90] {}
+;
+\end{circuitikz}
+\caption{Realización conceptual del controlador.}
+\label{fig:bloques}
+\end{figure}
+
+\textbf{Tarea:} Hacer el ejemplo mostrado en ``xcos'' y obtener para diferentes ganancias de control ``$K$'' una salida del sistema, a partir de esta, determinar para cuál ``$K$'' el sistema de la figura \ref{fig:bloques} invierte la planta de la mejor forma ($\implies y \approx r$).
+
+Para las señales de referencia:
+
+\begin{eqnarray*}
+		r(t) &=& \sin(\omega t) + 1\\
+		r(t) &=& \cos(\omega t)\\
+		r(t) = \mathrm{u}(t) &=&
+		\begin{cases}
+				0 \qquad \mathrm{para}~t < 0, \\
+				1 \qquad \mathrm{para}~t \ge 0
+		\end{cases}
+\end{eqnarray*}
+
+
+Donde la función $\mathrm{u} (t) $ es la función escalón unitario.
+
+Realizar las siguientes simulaciones en ``xcos''.
+\begin{enumerate}[label = \Roman*)]
+		\item Graficar a diferentes $K$ las salidas.
+		\item Determinar para cuál $K$ $y \approx r$.
+		\item Determinar el error en estado estacionario
+		\item Para cual $K$ $y = r$.
+\end{enumerate}
+
+\section{Del modelo a diagrama de bloques.}
+
+Para poder obtener una simulación en ``xcos'' de este problema es necesario la ecuación \ref{eq:planta} a un diagrama de bloques. Esto con el objetivo de simplificar la simulación, puesto que en caso contrario nos veríamos forzados a linealizar la ecuación.
+
+Para obtener un diagrama de bloques podríamos tomar la ecuación \ref{eq:planta} e integrarla, a modo de evitar la derivada:
+
+\begin{equation}
+		y(t) = \int_{0}^{t} \left(u(\tau) - 2\sqrt{y(\tau)}\right)\mathrm{d}\tau
+\end{equation}
+
+Con esta ecuación se nos hace más sencillo encontrar el diagrama de bloques, entendiendo que nuestra señal de salida $y(t)$ es igual a la suma de esta misma realimentada aplicando un operador raíz y una ganancia de $2$, luego sumando esta a la señal de actuación $u(t)$ e integrando este resultado. Esto nos daría un diagrama de bloques como sigue.
+
+\begin{figure}[!ht]
+\centering
+\begin{circuitikz}
+\draw
+node[mixer] (m) {}
+(m.1) node[inputarrow] {} node[right] {+}
+to[short] ++(-1,0) node[above] {$u(t)$}
+(m.3) to[twoport, text = $\displaystyle\int$, >] +(6,0)
+node[circ] (A) {}
+(A) to[short] ++(1,0) node[inputarrow] {} node[above] {$y(t)$}
+(A) to[short] ++(0,-2)
+to[twoport, text = $\sqrt{}$, >] ++(-3,0)
+to[twoport, text = $2$, >] ++(-3,0)
+to[short] ++(-0.2,0) -| (m.2)
+(m.2) node[inputarrow, rotate = 90] {} node[above] {-}
+;
+\end{circuitikz}
+\caption{Diagrama de bloques de la planta.}
+\end{figure}
+
+Teniendo la planta hecha, y basándonos en el modelo de la figura \ref{fig:bloques} solo nos queda reemplazar a $f\langle \circ \rangle$ por nuestro diagrama y a $h\langle \circ \rangle$ por una ganancia (esto dado lo que se ha pedido).
+
+
+\section{Gráficas para diferentes ganancias.}
+
+Una solución al problema es utilizar una ganancia proporcional para estabilizar la señal, para esto se trato con cuatro distintos valores de $K$, estos fueron $1,~10,~100,~1000$ con estos es posible observar que pasará con el sistema a un valor pequeño de $K$ y a valores muy grandes.
+
+Para cada una de las señales de referencia se utilizó el mismo sistema con distintas señales de entrada, los modelos se pueden ver en la figura \ref{fig:simul}. Estas tiene un bloque especial definido en el programa el cual es la planta, la cual se puede ver en la figura \ref{fig:planta}.
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width = 0.8\textwidth]{Diagrama_bloques}
+\includegraphics[width = 0.8\textwidth]{Diagrama_bloquessin}
+\includegraphics[width = 0.8\textwidth]{Diagrama_bloquescos}
+\caption{Representación en diagrama de bloques de la simulación con las diferentes señales de referencia.}
+\label{fig:simul}
+\end{figure}
+
+El primer modelo de la figura \ref{fig:simul} corresponde a la simulación con un escalón unitario, el segundo corresponde a la simulación con la señal $0.5\sin(\omega t) +1$ y el tercero corresponde a la simulación para la señal $\cos(\omega t) $. Para poder simular correctamente el sistema fue necesario cambiar un parámetro dentro de la función raíz cuadrada (el bloque ``sqrt'' en la figura \ref{fig:planta}), ya que por defecto esta no arroja valores imaginarios y es necesario utilizar estos para nuestra simulación, dado que en algún momento al utilizar la función de referencia $\cos(\omega t)$ la señal $y(t)$ será negativa.
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width = 0.8\textwidth]{planta}
+\caption{Representación en diagrama de bloques de la planta en ``xcos''.}
+\label{fig:planta}
+\end{figure}
+
+\subsection{Señal de referencia seno.}
+
+Para esta señal de referencia los resultados se pueden observar en la figura \ref{fig:sin}. Cada uno de los gráficos muestra como se comporta la señal $y(t)$ (en verde) con respecto a la referencia (en negro) se corresponden con ganancias de $K~=~1,~10,~100,~1000$ respectivamente. Se puede observar que para un valor de $K$ pequeño ($1$ por ejemplo) la señal intenta asemejarse a la referencia, sin embargo, no logra seguir a esta de buena manera. Para valores de $K$ muy grandes la señal comienza a asemejarse cada vez más a la referencia.
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width = 0.45\textwidth]{imagenes/seno/sink1}
+\includegraphics[width = 0.45\textwidth]{imagenes/seno/sink10}
+\includegraphics[width = 0.45\textwidth]{imagenes/seno/sink100}
+\includegraphics[width = 0.45\textwidth]{imagenes/seno/sink1000}
+\caption{Respuesta del sistema para $0.5\sin(\omega t) + 1$ como señal de referencia.}
+\label{fig:sin}
+\end{figure}
+
+\subsection{Señal de referencia seno.}
+
+Para esta señal de referencia los resultados de la simulación se pueden ver en la figura \ref{fig:cos}. Similar al caso anterior la señal $y(t)$ se puede ver en la curva verde, mientras que la señal de referencia en la curva en negro. En este ejemplo para una baja ganancia la salida del sistema incluso se desfasa con respecto a la referencia. Sin embargo, y al igual que para el caso anterior al aumentar mucho la ganancia, esta cada vez empieza a parecerse más a la señal de referencia.
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width = 0.45\textwidth]{imagenes/coseno/cosk1}
+\includegraphics[width = 0.45\textwidth]{imagenes/coseno/cosk10}
+\includegraphics[width = 0.45\textwidth]{imagenes/coseno/cosk100}
+\includegraphics[width = 0.45\textwidth]{imagenes/coseno/cosk1000}
+\caption{Respuesta del sistema para $\cos(\omega t)$ como señal de referencia.}
+\label{fig:cos}
+\end{figure}
+
+\subsection{Señal de referencia escalón unitario.}
+
+Para la señal escalón unitario la simulación los gráficos de simulación se pueden ver en la figura \ref{fig:esc}. Igual que en los casos anteriores la señal de verde corresponde a la salida, mientras que la negra a la referencia.
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width = 0.45\textwidth]{imagenes/escalon/escalonk1}
+\includegraphics[width = 0.45\textwidth]{imagenes/escalon/escalonk10}
+\includegraphics[width = 0.45\textwidth]{imagenes/escalon/escalonk100}
+\includegraphics[width = 0.45\textwidth]{imagenes/escalon/escalonk1000}
+\caption{Respuesta del sistema para el escalón unitario como señal de referencia.}
+\label{fig:esc}
+\end{figure}
+
+En este caso se puede observar que para bajas ganancias la salida se trata de aproximar pobremente a la señal de referencia, presentando errores aparentes de hasta el $80\%$, no obstante, para valores de $K$ muy grandes la señal sigue de buena manera a la referencia.
+
+\subsection{A cerca de la ganancia.}
+
+Considerando que en todas las simulaciones al aumentar mucho la ganancia obtenemos un buen control, podríamos decir que para casos generales aumentar mucho la ganancia ayuda a invertir la planta. Sin embargo, en esta simulación no se puede observar el comportamiento que tendría en una implementación real nuestro sistema de control, esto dado por el hecho de que no se han considerado las perturbaciones externas a la planta. Suponiendo que en un caso real esto es despreciable, entonces podríamos decir que nuestro sistema con una ganancia proporcional invierte de buena manera a la planta.
+
+\section{Para cuál ganancia la salida se aproxima de mejor manera a la referencia.}
+
+Tomando en consideración las simulaciones antes mostradas, se puede observar que mientras mayor sea $K$ la salida es cada vez más parecida a la señal de referencia. Podríamos decir que para $K = 1000$ $y \approx r$ ya que incluso se puede observar en la gráfica que ambas señales se sobreponen una con la otra.
+
+\section{Error en estado estacionario.}
+
+En los gráficos previamente mostrados se puede apreciar el error en color rojo, podemos observar que mientras más grande es $K$ menor es el error.
+
+Sin embargo, también podemos notar que para los distintos tipos de referencia el error se comporta de distinta manera a medida que avanza el tiempo.
+
+Para  la señal seno, vemos que nuestro error oscila en el tiempo independiente del valor de $K$ que se elija, esto no es apreciable en la ultima gráfica ya que como la señal de referencia y la salida son prácticamente iguales el error es despreciable. Sin embargo, este sigue oscilando. Podemos concluir entonces que para la señal seno, el error en estado estacionario no converge a un valor.
+
+Para la señal coseno, ocurre un fenómeno similar al seno, esto dado que ambas señales son de la misma naturaleza. Aquí también podemos concluir que el error no converge a un valor fijo, si no que, se mantiene oscilando en el tiempo.
+
+Para el caso partícula de la señal escalón unitario, podemos apreciar que el error se estabiliza después de cierto tiempo, al igual que la señal de salida. Podemos decir entonces que el error converge a un valor fijo cuando el tiempo crece desmedidamente. Para cada uno de los casos (valores de $K$) este valor es diferente.
+
+\section{Para cual ganancia la salida es exactamente igual a la referencia.}
+
+Hemos visto ya, que, mientras más aumente el valor de $K$, la ganancia proporcional, menor es el error y por lo tanto, más se aproxima la salida a la referencia. Sin embargo, sabemos que por más que aumente el valor de $K$ el error nunca será $0$, mas solo se reducirá afectando así cada vez menos a la señal de salida.
+
+Teniendo en consideración lo anterior podríamos asumir que para que la salida sea exactamente igual a la referencia, nuestra ganancia tendría que ser infinita. Sabemos bien que esto en la práctica no es posible, por lo que siempre tendremos que conformarnos con tratar de reducir el error al menor valor posible.
+\end{document}
+
